@@ -1,5 +1,13 @@
 # 03 複数人でのコンフリクト練習
 
+## レッスンのリポジトリ
+
+- 前のレッスン: [git-lesson-02-gitflow](https://github.com/bp22029/git-lesson-02-gitflow.git)
+- このレッスンのテンプレート: [git-lesson-03-conflict](https://github.com/bp22029/git-lesson-03-conflict.git)
+- 次のレッスン: [git-lesson-04-pr-review](https://github.com/bp22029/git-lesson-04-pr-review.git)
+
+この演習で学生が clone するのは、教員から指定されたグループ用共有リポジトリです。上のテンプレートリポジトリを直接 clone しないでください。
+
 ## 学習目標
 
 この演習では、2〜3人で同じ GitHub リポジトリを使い、同じファイルの同じ行を別々に編集するとコンフリクトが起きることを体験します。
@@ -102,6 +110,12 @@ group_research_note.md
 ### 1. 全員が同じ共有リポジトリを clone する
 
 `<GitHubリポジトリURL>` は、教員から指定されたグループ用リポジトリの URL に置き換えます。
+
+このレッスンでは、授業用の親フォルダにある `03` フォルダを使います。
+
+```bash
+cd 03
+```
 
 ```bash
 git clone <GitHubリポジトリURL>
