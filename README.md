@@ -6,6 +6,10 @@
 - このレッスンのテンプレート: [git-lesson-03-conflict](https://github.com/bp22029/git-lesson-03-conflict.git)
 - 次のレッスン: [git-lesson-04-pr-review](https://github.com/bp22029/git-lesson-04-pr-review.git)
 
+- グループA: [git-lesson-03-conflict-groupA](https://github.com/bp22029/git-lesson-03-conflict-groupA.git)
+- グループB: [git-lesson-03-conflict-groupB](https://github.com/bp22029/git-lesson-03-conflict-groupB.git)
+- グループC: [git-lesson-03-conflict-groupC](https://github.com/bp22029/git-lesson-03-conflict-groupC.git)
+
 この演習で学生が clone するのは、教員から指定されたグループ用共有リポジトリです。上のテンプレートリポジトリを直接 clone しないでください。
 
 ## 学習目標
