@@ -1,238 +1,397 @@
-# 03 コンフリクト練習
+# 03 複数人でのコンフリクト練習
 
 ## 学習目標
 
-この演習では、別々のブランチで同じファイルの同じ行を変更し、merge 時にコンフリクトが起きることを体験します。
+この演習では、2〜3人で同じ GitHub リポジトリを使い、同じファイルの同じ行を別々に編集するとコンフリクトが起きることを体験します。
 
 終了後、次のことを説明できるようになることを目標にします。
 
-- なぜコンフリクトが起きるのかを説明できる
-- コンフリクトマーカーを見つけられる
-- VS Code で内容を選び、手動で修正できる
-- コンフリクト解消後に commit できる
+- 複数人が同じ行を変更したときに、なぜコンフリクトが起きるのかを説明できる
+- `git push` が拒否される場面を確認できる
+- `git pull --no-rebase origin main` によってコンフリクトが発生する場面を確認できる
+- コンフリクトマーカーを見つけ、内容を手動で修正できる
+- コンフリクト解消後に `git add`、`git commit`、`git push` を実行できる
 
 ## 前提条件
 
 - Git の基本操作を実行できる
-- `git switch -c` と `git merge` を使ったことがある
+- `git status`、`git add`、`git commit`、`git push` を使ったことがある
 - VS Code で Markdown ファイルを編集できる
+- 2〜3人で同じ共有リポジトリにアクセスできる
+
+## この演習だけの重要な前提
+
+この演習では、1人1リポジトリではなく、2〜3人で同じ GitHub リポジトリを使います。
+
+```text
+通常の演習: 学生ごとに自分用リポジトリを使う
+この演習:  グループごとに1つの共有リポジトリを使う
+```
+
+これはコンフリクトを体験するための授業用の設定です。普段の共同作業では、いきなり同じ `main` ブランチへ直接 push するのではなく、feature ブランチや Pull Request を使うことが多いです。
+
+## 教員の事前準備
+
+教員は、グループごとにこのテンプレートから共有リポジトリを作成します。
+
+リポジトリ名の例:
+
+```text
+git-lesson-03-conflict-group-01
+git-lesson-03-conflict-group-02
+```
+
+準備すること:
+
+- グループごとに1つの共有リポジトリを作成する
+- 2〜3人の学生を同じリポジトリの collaborator に追加する
+- 学生に、自分のグループのリポジトリ URL を配布する
+- この演習では全員が同じ `main` ブランチで作業することを伝える
+
+注意:
+
+- 認証情報、トークン、SSH 秘密鍵は共有しません。
+- collaborator 追加や Organization の権限設定は、授業の運用に合わせて教員が行います。
 
 ## このリポジトリで使うファイル
 
 ```text
-conflict_note.md
-branch_instructions/feature-a.md
-branch_instructions/feature-b.md
+group_research_note.md
 ```
 
-## ブランチの考え方
+このファイルの同じ行を、複数人が別々の内容に変更します。
+
+対象行:
 
 ```text
-main
-  |
-  o
-   \
-    develop
-      |
-      o----------------o
-       \              /
-        feature/a    feature/b
-          同じ行を別々に変更
+研究テーマ候補: ここに1つの候補を書く。
 ```
 
-この演習では、`conflict_note.md` の同じ行を `feature/a` と `feature/b` の両方で変更します。そのため、後から merge するブランチで必ずコンフリクトが発生します。
+## 全体の流れ
+
+```text
+学生A              GitHub共有リポジトリ              学生B
+  |                       |                            |
+  | edit + commit         |                            |
+  | git push -----------> |                            |
+  |                       |              edit + commit |
+  |                       | <----------- git pull      |
+  |                       |          conflict 発生     |
+  |                       |                            |
+```
+
+3人で行う場合は、学生Aが最初に push し、学生Bが解消して push したあと、学生Cが同じように pull してコンフリクトを体験します。
+
+## 役割
+
+2人の場合:
+
+- 学生A: 最初に push する人
+- 学生B: 後から pull してコンフリクトを解消する人
+
+3人の場合:
+
+- 学生A: 最初に push する人
+- 学生B: 1回目のコンフリクトを解消して push する人
+- 学生C: 2回目のコンフリクトを解消して push する人
 
 ## 手順
 
-### 1. develop ブランチを作成する
+ここまでは、複数人でコンフリクトが起きる考え方です。ここからは、説明を読みながらグループで同じ操作を行う基本手順です。
+
+### 1. 全員が同じ共有リポジトリを clone する
+
+`<GitHubリポジトリURL>` は、教員から指定されたグループ用リポジトリの URL に置き換えます。
 
 ```bash
-git switch -c develop
+git clone <GitHubリポジトリURL>
+```
+
+```bash
+cd <リポジトリ名>
 ```
 
 確認ポイント:
 
-- `On branch develop` と表示されるか確認します。
+- グループ全員が同じ GitHub リポジトリを clone しているか確認します。
+- `group_research_note.md` があるか確認します。
+
+### 2. 全員が現在の状態を確認する
 
 ```bash
 git status
 ```
 
-### 2. feature/a ブランチを作成する
+確認ポイント:
 
-```bash
-git switch -c feature/a
-```
+- `On branch main` と表示されるか確認します。
+- `nothing to commit` と表示されるか確認します。
 
-### 3. feature/a で同じ行を変更する
+### 3. 全員が同じ行を編集する
 
-VS Code で `conflict_note.md` を開き、次の行を探します。
-
-```text
-結論: このデータから分かることをここに書く。
-```
-
-その行を次のように変更します。
+VS Code で `group_research_note.md` を開き、次の行を探します。
 
 ```text
-結論: 条件Aでは測定値が安定している。
+研究テーマ候補: ここに1つの候補を書く。
 ```
 
-保存したら commit します。
+この行を、各自が別々の内容に変更します。
 
-```bash
-git status
+学生Aの例:
+
+```text
+研究テーマ候補: 学習ログを使って、学生のつまずきやすい操作を調べる。
 ```
 
-```bash
-git add conflict_note.md
+学生Bの例:
+
+```text
+研究テーマ候補: Javaのエラーメッセージを分類して、初学者向けの説明を考える。
 ```
 
-```bash
-git commit -m "条件Aの結論を追加"
-```
+学生Cの例:
 
-### 4. develop に戻る
-
-```bash
-git switch develop
+```text
+研究テーマ候補: 実験ノートの書き方が再現性に与える影響を調べる。
 ```
 
 確認ポイント:
 
-- `conflict_note.md` の結論行が元に戻って見えることを確認します。
-- これは `feature/a` の変更がまだ `develop` に入っていないためです。
+- 全員が同じ行を変更します。
+- 同じファイルでも、違う行を編集するとコンフリクトが起きない場合があります。
 
-### 5. feature/b ブランチを作成する
+### 4. 全員が commit する
 
-```bash
-git switch -c feature/b
-```
-
-### 6. feature/b で同じ行を別の内容に変更する
-
-VS Code で `conflict_note.md` を開き、同じ行を次のように変更します。
-
-```text
-結論: 条件Bでは測定値にばらつきがある。
-```
-
-保存したら commit します。
+全員が自分の PC で次を実行します。
 
 ```bash
 git status
 ```
 
 ```bash
-git add conflict_note.md
+git add group_research_note.md
 ```
 
 ```bash
-git commit -m "条件Bの結論を追加"
-```
-
-### 7. develop に feature/a を merge する
-
-```bash
-git switch develop
-```
-
-```bash
-git merge feature/a
+git commit -m "研究テーマ候補を追加"
 ```
 
 確認ポイント:
 
-- この merge は通常成功します。
-- `conflict_note.md` の結論行が条件Aの内容になります。
+- この時点では、まだ GitHub には送られていません。
+- 全員が commit してから次に進みます。
 
-### 8. develop に feature/b を merge してコンフリクトを起こす
+### 5. 学生Aが最初に push する
+
+学生Aだけが実行します。
 
 ```bash
-git merge feature/b
+git push
+```
+
+確認ポイント:
+
+- 学生Aの push は成功するはずです。
+- GitHub 上の `group_research_note.md` に、学生Aの内容が表示されます。
+
+### 6. 学生Bが push して拒否されることを確認する
+
+学生Bが実行します。
+
+```bash
+git push
+```
+
+確認ポイント:
+
+- `rejected` や `fetch first` のような表示が出ます。
+- これは、GitHub 側に学生Aの新しい commit があるためです。
+- この表示は、この演習では期待される結果です。
+
+### 7. 学生Bが pull してコンフリクトを発生させる
+
+学生Bが実行します。
+
+```bash
+git pull --no-rebase origin main
 ```
 
 確認ポイント:
 
 - `CONFLICT` という表示が出ます。
 - `Automatic merge failed` のような表示が出ます。
-- これは、この演習では期待される結果です。
+- `group_research_note.md` にコンフリクトマーカーが入ります。
 
-### 9. コンフリクトマーカーを確認する
+### 8. 学生Bがコンフリクトマーカーを確認する
 
-VS Code で `conflict_note.md` を開くと、次のような表示があります。
+VS Code で `group_research_note.md` を開くと、次のような表示があります。
 
 ```text
 <<<<<<< HEAD
-結論: 条件Aでは測定値が安定している。
+研究テーマ候補: Javaのエラーメッセージを分類して、初学者向けの説明を考える。
 =======
-結論: 条件Bでは測定値にばらつきがある。
->>>>>>> feature/b
+研究テーマ候補: 学習ログを使って、学生のつまずきやすい操作を調べる。
+>>>>>>> origin/main
 ```
 
 意味:
 
-- `<<<<<<< HEAD` から `=======` までは現在の `develop` 側の内容
-- `=======` から `>>>>>>> feature/b` までは取り込もうとしている `feature/b` 側の内容
+- `<<<<<<< HEAD` から `=======` までは、自分の PC にある内容
+- `=======` から `>>>>>>> origin/main` までは、GitHub から取り込もうとしている内容
 
-### 10. 内容を手動で修正する
+### 9. 学生Bが内容を手動で修正する
 
-今回は、両方の内容を残して次のように修正します。
+今回は、両方の候補を残して、次のように修正します。
 
 ```text
-結論: 条件Aでは測定値が安定しており、条件Bでは測定値にばらつきがある。
+研究テーマ候補:
+- 学習ログを使って、学生のつまずきやすい操作を調べる。
+- Javaのエラーメッセージを分類して、初学者向けの説明を考える。
 ```
 
 注意:
 
 - `<<<<<<< HEAD`
 - `=======`
-- `>>>>>>> feature/b`
+- `>>>>>>> origin/main`
 
 これらの行はすべて削除します。
 
-### 11. コンフリクト解消を commit する
+### 10. 学生Bがコンフリクト解消を commit する
+
+学生Bが実行します。
 
 ```bash
 git status
 ```
 
-確認ポイント:
-
-- `both modified: conflict_note.md` または conflict 中であることが表示されます。
-
 ```bash
-git add conflict_note.md
+git add group_research_note.md
 ```
 
 ```bash
-git commit -m "結論行のコンフリクトを解消"
+git commit -m "研究テーマ候補のコンフリクトを解消"
+```
+
+```bash
+git push
 ```
 
 確認ポイント:
 
-- commit が成功すれば、コンフリクト解消は完了です。
+- GitHub 上の `group_research_note.md` に、学生Aと学生Bの両方の内容が表示されます。
+
+### 11. 3人目がいる場合
+
+学生Cもすでに自分の内容を commit している場合、学生Cの `git push` は拒否されます。
+
+学生Cは、学生Bと同じ流れで進めます。
+
+```bash
+git push
+```
+
+拒否されたら、次を実行します。
+
+```bash
+git pull --no-rebase origin main
+```
+
+`group_research_note.md` を修正し、学生A、学生B、学生Cの内容が残るようにします。
+
+修正例:
+
+```text
+研究テーマ候補:
+- 学習ログを使って、学生のつまずきやすい操作を調べる。
+- Javaのエラーメッセージを分類して、初学者向けの説明を考える。
+- 実験ノートの書き方が再現性に与える影響を調べる。
+```
+
+修正後:
+
+```bash
+git add group_research_note.md
+```
+
+```bash
+git commit -m "3人目の研究テーマ候補を追加"
+```
+
+```bash
+git push
+```
+
+## 演習課題
+
+ここからは、上の説明付き基本手順を参考にして、グループで別の行を決め、もう一度コンフリクトを体験します。
+
+課題:
+
+- `group_research_note.md` の `次に調べること:` の行を全員が別々に変更する
+- 全員が commit する
+- 1人目が push する
+- 2人目以降が push で拒否されることを確認する
+- `git pull --no-rebase origin main` でコンフリクトを発生させる
+- 全員の内容が残るように手動で修正する
+- 修正後に `git add`、`git commit`、`git push` を実行する
+
+変更する行:
+
+```text
+次に調べること: ここに次の作業を書く。
+```
+
+修正後の例:
+
+```text
+次に調べること:
+- 関連しそうなキーワードを3つ探す。
+- 先行研究を1本読んで、分からない用語をメモする。
+- 研究室の先輩にテーマの決め方を質問する。
+```
+
+この課題の主目的:
+
+- 複数人が同じ場所を編集したとき、Git が自動で判断できない場面があることを体感すること
+- コンフリクト解消は「どちらかを選ぶ」だけでなく、「両方を残す」こともできると理解すること
 
 ## 期待される結果
 
-- `git merge feature/b` でコンフリクトが発生する
-- `conflict_note.md` にコンフリクトマーカーが表示される
-- マーカーを削除し、結論行を1つの自然な文章に直せる
-- コンフリクト解消後の commit が作成される
+- 学生Aの `git push` は成功する
+- 学生Bまたは学生Cの `git push` は一度拒否される
+- `git pull --no-rebase origin main` でコンフリクトが発生する
+- `group_research_note.md` にコンフリクトマーカーが表示される
+- マーカーを削除し、複数人の内容を残した形に修正できる
+- コンフリクト解消後に commit して push できる
 
 ## よくあるエラー
+
+### `rejected` と表示された
+
+原因:
+
+GitHub 側に、自分の PC にはまだない commit があります。
+
+対応:
+
+この演習では、次を実行して GitHub 側の変更を取り込みます。
+
+```bash
+git pull --no-rebase origin main
+```
 
 ### コンフリクトが起きない
 
 原因:
 
-同じ行を変更していない可能性があります。
+同じファイルでも、違う行を変更した可能性があります。
 
 確認すること:
 
-- `feature/a` と `feature/b` の両方で、`結論:` から始まる同じ行を変更したか
-- それぞれのブランチで commit したか
-- `develop` に `feature/a` を merge してから `feature/b` を merge したか
+- 全員が `研究テーマ候補:` の同じ行を変更したか
+- 全員が自分の変更を commit したか
+- 学生Aが先に push したあと、学生Bが pull したか
 
 ### `error: you need to resolve your current index first`
 
@@ -266,24 +425,30 @@ VS Code の検索で次を探してください。
 
 ## 提出物
 
+- グループの共有リポジトリ URL
 - コンフリクトが発生したときの `git status` の記録
-- 修正後の `conflict_note.md`
+- 修正後の `group_research_note.md`
 - コンフリクト解消 commit の URL
 - 授業中の作業記録
 
 ## 振り返り質問
 
-- なぜ `feature/b` を merge したときにコンフリクトが起きましたか。
-- `HEAD` 側の内容は、どのブランチの内容でしたか。
+- なぜ後から push した人の `git push` は拒否されましたか。
+- `HEAD` 側の内容は、誰の PC にあった内容でしたか。
+- `origin/main` 側の内容は、どこから来た内容でしたか。
 - 実際の共同研究でコンフリクトを減らすには、どのような工夫ができそうですか。
 
 ## 提出前チェックリスト
 
-- [ ] `feature/a` で結論行を変更した
-- [ ] `feature/b` で同じ結論行を別の内容に変更した
-- [ ] `develop` に `feature/a` を merge した
-- [ ] `develop` に `feature/b` を merge してコンフリクトを確認した
+- [ ] グループ全員が同じ共有リポジトリを clone した
+- [ ] 全員が `group_research_note.md` の同じ行を編集した
+- [ ] 全員が自分の変更を commit した
+- [ ] 1人目が push した
+- [ ] 2人目以降が push の拒否を確認した
+- [ ] `git pull --no-rebase origin main` でコンフリクトを確認した
 - [ ] コンフリクトマーカーを削除した
-- [ ] 修正後に `git add conflict_note.md` を実行した
+- [ ] 全員の内容が残るように修正した
+- [ ] 修正後に `git add group_research_note.md` を実行した
 - [ ] コンフリクト解消 commit を作成した
+- [ ] GitHub に push した
 - [ ] 作業記録を書いた
